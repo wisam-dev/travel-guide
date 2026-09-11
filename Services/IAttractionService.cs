@@ -10,11 +10,13 @@ public interface IAttractionService
         string description,
         string country,
         string city,
+        bool includeComments = false,
         int pageNumber = 1,
         int pageSize = 20
     );
 
     public Task<PagedResult<AttractionListItemDto>> GetWithoutCommentsAsync(
+        bool includeComments = false,
         int pageNumber = 1,
         int pageSize = 20
     );

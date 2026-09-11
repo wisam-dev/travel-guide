@@ -9,6 +9,9 @@ public class AttractionListItemDto
     public string City { get; set; }
     public string Country { get; set; }
     public int CommentCount { get; set; }
+
+    // Only populated when the caller asks for it (includeComments=true) - keeps list responses lean by default.
+    public List<CommentDto> Comments { get; set; }
 }
 
 public class CommentDto

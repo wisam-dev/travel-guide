@@ -11,12 +11,16 @@ public class AttractionDbRepos
     private readonly ILogger<AttractionDbRepos> _logger;
     private readonly MainDbContext _dbContext;
 
+    // Task 6, bullet 1: filter attractions by category, title, description, country and city.
+    // All filters are optional - only the ones actually provided (non-empty) are applied, combined with AND.
+    // includeComments: when true, each item also carries its full list of comments (with author name).
     public async Task<PagedResult<AttractionListItemDto>> GetFilteredAsync(
         string category,
         string title,
         string description,
         string country,
         string city,
+        bool includeComments,
         int pageNumber,
         int pageSize
     )
@@ -43,10 +47,12 @@ public class AttractionDbRepos
         if (!string.IsNullOrWhiteSpace(city))
             query = query.Where(a => a.City.Name.Contains(city));
 
-        return await ToPagedListItemsAsync(query, pageNumber, pageSize);
+        return await ToPagedListItemsAsync(query, includeComments, pageNumber, pageSize);
     }
 
+    // Task 6, bullet 2: attractions that have zero comments.
     public async Task<PagedResult<AttractionListItemDto>> GetWithoutCommentsAsync(
+        bool includeComments,
         int pageNumber,
         int pageSize
     )
@@ -58,9 +64,12 @@ public class AttractionDbRepos
             .Include(a => a.Comments)
             .Where(a => !a.Comments.Any());
 
-        return await ToPagedListItemsAsync(query, pageNumber, pageSize);
+        // note: includeComments is kept here for API symmetry, but since these attractions have
+        // zero comments by definition, the resulting Comments list will always be empty.
+        return await ToPagedListItemsAsync(query, includeComments, pageNumber, pageSize);
     }
 
+    // Task 6, bullet 3: one attraction's category, title, description, and all its comments (paginated).
     public async Task<AttractionDetailDto> GetDetailAsync(
         Guid attractionId,
         int commentsPageNumber,
@@ -116,12 +125,16 @@ public class AttractionDbRepos
 
     private async Task<PagedResult<AttractionListItemDto>> ToPagedListItemsAsync(
         IQueryable<AttractionDbM> query,
+        bool includeComments,
         int pageNumber,
         int pageSize
     )
     {
         var totalCount = await query.CountAsync();
 
+        // Always project the comments (we already join Comments/User for CommentCount anyway).
+        // A ternary here (comments-subquery vs null) does not translate reliably to SQL in EF Core,
+        // so instead we materialize everything and strip Comments client-side if not requested.
         var items = await query
             .OrderBy(a => a.Title)
             .Skip((pageNumber - 1) * pageSize)
@@ -135,8 +148,22 @@ public class AttractionDbRepos
                 City = a.City.Name,
                 Country = a.City.Country.Name,
                 CommentCount = a.Comments.Count,
+                Comments = a
+                    .Comments.Select(c => new CommentDto
+                    {
+                        CommentId = c.CommentId,
+                        Text = c.Text,
+                        CreatedAt = c.CreatedAt,
+                        UserId = c.UserId,
+                        UserName = c.User.Name,
+                    })
+                    .ToList(),
             })
             .ToListAsync();
+
+        if (!includeComments)
+            foreach (var item in items)
+                item.Comments = null;
 
         return new PagedResult<AttractionListItemDto>
         {

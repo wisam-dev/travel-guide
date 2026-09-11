@@ -11,22 +11,26 @@ namespace AppWebApi.Controllers
         readonly ILogger<UsersController> _logger;
         readonly IUserService _service;
 
-        // GET: api/users/withcomments?pageNumber=1&pageSize=20
+        // GET: api/users/getall?includeComments=true&pageNumber=1&pageSize=20
         [HttpGet()]
-        [ActionName("WithComments")]
-        [ProducesResponseType(200, Type = typeof(PagedResult<UserWithCommentsDto>))]
+        [ActionName("getall")]
+        [ProducesResponseType(200, Type = typeof(PagedResult<UsersDto>))]
         [ProducesResponseType(400, Type = typeof(string))]
-        public async Task<IActionResult> WithComments(int pageNumber = 1, int pageSize = 20)
+        public async Task<IActionResult> GetAll(
+            bool includeComments = true,
+            int pageNumber = 1,
+            int pageSize = 20
+        )
         {
             try
             {
-                _logger.LogInformation($"{nameof(WithComments)}");
-                var result = await _service.GetAllWithCommentsAsync(pageNumber, pageSize);
+                _logger.LogInformation($"{nameof(GetAll)}");
+                var result = await _service.GetAllUsersAsync(includeComments, pageNumber, pageSize);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{nameof(WithComments)}: {ex.Message}");
+                _logger.LogError($"{nameof(GetAll)}: {ex.Message}");
                 return BadRequest(ex.Message);
             }
         }

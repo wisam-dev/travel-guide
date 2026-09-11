@@ -13,7 +13,8 @@ public class UserDbRepos
     // Task 6, bullet 4: all users and the comments each of them has posted.
     // Users are paginated; each user's own comment list is returned in full (comment counts per user
     // are naturally small - seeding spreads ~0-20 comments per attraction across all users).
-    public async Task<PagedResult<UserWithCommentsDto>> GetAllWithCommentsAsync(
+    public async Task<PagedResult<UsersDto>> GetAllUsersAsync(
+        bool includeComments,
         int pageNumber,
         int pageSize
     )
@@ -21,14 +22,19 @@ public class UserDbRepos
         var query = _dbContext
             .Users.Include(u => u.Comments)
                 .ThenInclude(c => c.Attraction)
-            .OrderBy(u => u.Name);
+            .OrderBy(u => u.Name)
+            .Include(u => u.Comments)
+            .AsQueryable();
+
+        // if (includeComments)
+        //     query = query.Include(u => u.Comments);
 
         var totalCount = await query.CountAsync();
 
         var items = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(u => new UserWithCommentsDto
+            .Select(u => new UsersDto
             {
                 UserId = u.UserId,
                 Name = u.Name,
@@ -46,7 +52,7 @@ public class UserDbRepos
             })
             .ToListAsync();
 
-        return new PagedResult<UserWithCommentsDto>
+        return new PagedResult<UsersDto>
         {
             Items = items,
             PageNumber = pageNumber,

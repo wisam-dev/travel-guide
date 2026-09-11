@@ -11,8 +11,9 @@ namespace AppWebApi.Controllers
         readonly ILogger<AttractionsController> _logger;
         readonly IAttractionService _service;
 
-        // GET: api/attractions/filtered?category=&title=&description=&country=&city=&pageNumber=1&pageSize=20
-        // All parameters are optional; provided ones are combined with AND (substring match, case-insensitive).
+        // GET: api/attractions/filtered?category=&title=&description=&country=&city=&includeComments=false&pageNumber=1&pageSize=20
+        // All filter parameters are optional; provided ones are combined with AND (substring match, case-insensitive).
+        // includeComments=true also returns each attraction's full comment list, not just the count.
         [HttpGet()]
         [ActionName("Filtered")]
         [ProducesResponseType(200, Type = typeof(PagedResult<AttractionListItemDto>))]
@@ -23,6 +24,7 @@ namespace AppWebApi.Controllers
             string description = null,
             string country = null,
             string city = null,
+            bool includeComments = false,
             int pageNumber = 1,
             int pageSize = 20
         )
@@ -36,6 +38,7 @@ namespace AppWebApi.Controllers
                     description,
                     country,
                     city,
+                    includeComments,
                     pageNumber,
                     pageSize
                 );
@@ -48,17 +51,25 @@ namespace AppWebApi.Controllers
             }
         }
 
-        // GET: api/attractions/withoutcomments?pageNumber=1&pageSize=20
+        // GET: api/attractions/withoutcomments?includeComments=false&pageNumber=1&pageSize=20
         [HttpGet()]
         [ActionName("WithoutComments")]
         [ProducesResponseType(200, Type = typeof(PagedResult<AttractionListItemDto>))]
         [ProducesResponseType(400, Type = typeof(string))]
-        public async Task<IActionResult> WithoutComments(int pageNumber = 1, int pageSize = 20)
+        public async Task<IActionResult> WithoutComments(
+            bool includeComments = false,
+            int pageNumber = 1,
+            int pageSize = 20
+        )
         {
             try
             {
                 _logger.LogInformation($"{nameof(WithoutComments)}");
-                var result = await _service.GetWithoutCommentsAsync(pageNumber, pageSize);
+                var result = await _service.GetWithoutCommentsAsync(
+                    includeComments,
+                    pageNumber,
+                    pageSize
+                );
                 return Ok(result);
             }
             catch (Exception ex)

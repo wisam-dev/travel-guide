@@ -9,10 +9,11 @@ public class UserServiceDb : IUserService
     private readonly UserDbRepos _repo;
     private readonly ILogger<UserServiceDb> _logger;
 
-    public Task<PagedResult<UserWithCommentsDto>> GetAllWithCommentsAsync(
+    public Task<PagedResult<UsersDto>> GetAllUsersAsync(
+        bool includeComments = true,
         int pageNumber = 1,
         int pageSize = 20
-    ) => _repo.GetAllWithCommentsAsync(pageNumber, pageSize);
+    ) => _repo.GetAllUsersAsync(includeComments, pageNumber, pageSize);
 
     #region constructors
     public UserServiceDb(UserDbRepos repo)

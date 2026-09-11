@@ -9,7 +9,7 @@ public class UserCommentDto
     public string AttractionTitle { get; set; }
 }
 
-public class UserWithCommentsDto
+public class UsersDto
 {
     public Guid UserId { get; set; }
     public string Name { get; set; }

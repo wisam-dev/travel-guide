@@ -15,14 +15,26 @@ public class AttractionServiceDb : IAttractionService
         string description,
         string country,
         string city,
+        bool includeComments = false,
         int pageNumber = 1,
         int pageSize = 20
-    ) => _repo.GetFilteredAsync(category, title, description, country, city, pageNumber, pageSize);
+    ) =>
+        _repo.GetFilteredAsync(
+            category,
+            title,
+            description,
+            country,
+            city,
+            includeComments,
+            pageNumber,
+            pageSize
+        );
 
     public Task<PagedResult<AttractionListItemDto>> GetWithoutCommentsAsync(
+        bool includeComments = false,
         int pageNumber = 1,
         int pageSize = 20
-    ) => _repo.GetWithoutCommentsAsync(pageNumber, pageSize);
+    ) => _repo.GetWithoutCommentsAsync(includeComments, pageNumber, pageSize);
 
     public Task<AttractionDetailDto> GetDetailAsync(
         Guid attractionId,
