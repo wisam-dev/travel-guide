@@ -83,7 +83,7 @@ namespace AppWebApi.Controllers
                 await _service.SeedAsync(nrUsers, nrCities, nrAttractions);
 
                 return Ok(
-                    $"Seeded {nrUsers} users, {nrCities} cities, and {nrAttractions} attractions (with random comments) successfully"
+                    $"Seeded {nrUsers} users, {nrCities} cities, and {nrAttractions} attractions (with random comments) successfully. "
                 );
             }
             catch (Exception ex)

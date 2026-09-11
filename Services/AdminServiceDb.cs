@@ -11,6 +11,8 @@ public class AdminServiceDb : IAdminService
     public Task SeedAsync(int nrUsers = 50, int nrCities = 100, int nrAttractions = 1000) =>
         _repo.SeedAsync(nrUsers, nrCities, nrAttractions);
 
+    public Task ClearAllAsync() => _repo.ClearAllAsync();
+
     #region constructors
     public AdminServiceDb(AdminDbRepos repo)
     {

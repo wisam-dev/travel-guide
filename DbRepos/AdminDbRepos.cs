@@ -11,8 +11,6 @@ public class AdminDbRepos
 {
     private const string _seedSource = "./app-seeds.json";
 
-    // The bundled app-seeds.json only ships address data for these 4 countries.
-    // Hard-coding them here keeps the "at least 4 countries" requirement explicit and predictable.
     private static readonly string[] _countryNames = { "Sweden", "Norway", "Denmark", "Finland" };
 
     private static readonly string[] _categoryNames =
@@ -109,8 +107,7 @@ public class AdminDbRepos
     }
 
     // Deletes existing rows in FK-safe order (children before parents).
-    // Task 7's "DeleteAllTestData" service uses a stored procedure instead - this is only for re-seeding.
-    private async Task ClearAllAsync()
+    public async Task ClearAllAsync()
     {
         _dbContext.Comments.RemoveRange(_dbContext.Comments);
         await _dbContext.SaveChangesAsync();

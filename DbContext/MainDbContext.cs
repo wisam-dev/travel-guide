@@ -41,7 +41,6 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
     }
     #endregion
 
-    //Here we can modify the migration building
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         #region override modelbuilder
@@ -86,7 +85,6 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
             .HasForeignKey(c => c.AttractionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Indexes beyond the ones EF Core creates automatically for FKs
         modelBuilder.Entity<UserDbM>().HasIndex(u => u.Email).IsUnique();
 
         modelBuilder.Entity<AttractionDbM>().HasIndex(a => a.Title);
@@ -149,73 +147,73 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
         }
     }
 
-    // public class MySqlDbContext : MainDbContext
-    // {
-    //     public MySqlDbContext() { }
+    public class MySqlDbContext : MainDbContext
+    {
+        public MySqlDbContext() { }
 
-    //     public MySqlDbContext(DbContextOptions options)
-    //         : base(options, null) { }
+        public MySqlDbContext(DbContextOptions options)
+            : base(options, null) { }
 
-    //     //Used only for CodeFirst Database Migration
-    //     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //     {
-    //         if (!optionsBuilder.IsConfigured)
-    //         {
-    //             optionsBuilder = optionsBuilder.ConfigureForDesignTime(
-    //                 (options, connectionString) =>
-    //                     options.UseMySql(
-    //                         connectionString,
-    //                         ServerVersion.AutoDetect(connectionString),
-    //                         b =>
-    //                             b.SchemaBehavior(
-    //                                 Microting
-    //                                     .EntityFrameworkCore
-    //                                     .MySql
-    //                                     .Infrastructure
-    //                                     .MySqlSchemaBehavior
-    //                                     .Translate,
-    //                                 (schema, table) => $"{schema}_{table}"
-    //                             )
-    //                     )
-    //             );
-    //         }
+        //Used only for CodeFirst Database Migration
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder = optionsBuilder.ConfigureForDesignTime(
+                    (options, connectionString) =>
+                        options.UseMySql(
+                            connectionString,
+                            ServerVersion.AutoDetect(connectionString),
+                            b =>
+                                b.SchemaBehavior(
+                                    Microting
+                                        .EntityFrameworkCore
+                                        .MySql
+                                        .Infrastructure
+                                        .MySqlSchemaBehavior
+                                        .Translate,
+                                    (schema, table) => $"{schema}_{table}"
+                                )
+                        )
+                );
+            }
 
-    //         base.OnConfiguring(optionsBuilder);
-    //     }
+            base.OnConfiguring(optionsBuilder);
+        }
 
-    //     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    //     {
-    //         configurationBuilder.Properties<string>().HaveColumnType("varchar(200)");
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            configurationBuilder.Properties<string>().HaveColumnType("varchar(200)");
 
-    //         base.ConfigureConventions(configurationBuilder);
-    //     }
-    // }
+            base.ConfigureConventions(configurationBuilder);
+        }
+    }
 
-    // public class PostgresDbContext : MainDbContext
-    // {
-    //     public PostgresDbContext() { }
+    public class PostgresDbContext : MainDbContext
+    {
+        public PostgresDbContext() { }
 
-    //     public PostgresDbContext(DbContextOptions options)
-    //         : base(options, null) { }
+        public PostgresDbContext(DbContextOptions options)
+            : base(options, null) { }
 
-    //     //Used only for CodeFirst Database Migration
-    //     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //     {
-    //         if (!optionsBuilder.IsConfigured)
-    //         {
-    //             optionsBuilder = optionsBuilder.ConfigureForDesignTime(
-    //                 (options, connectionString) => options.UseNpgsql(connectionString)
-    //             );
-    //         }
+        //Used only for CodeFirst Database Migration
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder = optionsBuilder.ConfigureForDesignTime(
+                    (options, connectionString) => options.UseNpgsql(connectionString)
+                );
+            }
 
-    //         base.OnConfiguring(optionsBuilder);
-    //     }
+            base.OnConfiguring(optionsBuilder);
+        }
 
-    //     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    //     {
-    //         configurationBuilder.Properties<string>().HaveColumnType("varchar(200)");
-    //         base.ConfigureConventions(configurationBuilder);
-    //     }
-    // }
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            configurationBuilder.Properties<string>().HaveColumnType("varchar(200)");
+            base.ConfigureConventions(configurationBuilder);
+        }
+    }
     #endregion
 }

@@ -41,10 +41,14 @@ builder.Services.AddSwaggerGen(c =>
         "v1",
         new()
         {
-            Title = "TravelGuide API v1.0",
+            Title = "TravelGuide API",
+#if DEBUG
+            Version = "v1.0 DEBUG",
+#else
             Version = "v1.0",
+#endif
             Description =
-                "This is an API created for a school project involving ASP.NET, Entity Framework Core & Architecture."
+                "A Restful WebApi for browsing cities, attractions, and user comments."
                 + $"<br>DataSet: {builder.Configuration["DatabaseConnections:UseDataSetWithTag"]}"
                 + $"<br>DefaultDataUser: {builder.Configuration["DatabaseConnections:DefaultDataUser"]}",
         }
@@ -56,8 +60,12 @@ builder.Services.AddInMemoryLogger();
 
 //Inject DbRepos and Services
 builder.Services.AddScoped<AdminDbRepos>();
+builder.Services.AddScoped<AttractionDbRepos>();
+builder.Services.AddScoped<UserDbRepos>();
 
 builder.Services.AddScoped<IAdminService, AdminServiceDb>();
+builder.Services.AddScoped<IAttractionService, AttractionServiceDb>();
+builder.Services.AddScoped<IUserService, UserServiceDb>();
 
 var app = builder.Build();
 
