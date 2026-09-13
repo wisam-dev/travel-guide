@@ -132,9 +132,6 @@ public class AttractionDbRepos
     {
         var totalCount = await query.CountAsync();
 
-        // Always project the comments (we already join Comments/User for CommentCount anyway).
-        // A ternary here (comments-subquery vs null) does not translate reliably to SQL in EF Core,
-        // so instead we materialize everything and strip Comments client-side if not requested.
         var items = await query
             .OrderBy(a => a.Title)
             .Skip((pageNumber - 1) * pageSize)

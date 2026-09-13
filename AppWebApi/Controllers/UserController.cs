@@ -13,7 +13,7 @@ namespace AppWebApi.Controllers
 
         // GET: api/users/getall?includeComments=true&pageNumber=1&pageSize=20
         [HttpGet()]
-        [ActionName("getall")]
+        [ActionName("")]
         [ProducesResponseType(200, Type = typeof(PagedResult<UsersDto>))]
         [ProducesResponseType(400, Type = typeof(string))]
         public async Task<IActionResult> GetAll(

@@ -11,27 +11,21 @@ public class UserDbRepos
     private readonly MainDbContext _dbContext;
 
     // Task 6, bullet 4: all users and the comments each of them has posted.
-    // Users are paginated; each user's own comment list is returned in full (comment counts per user
-    // are naturally small - seeding spreads ~0-20 comments per attraction across all users).
+    // Pages the users first (cheap), then - only if includeComments is requested - fetches comments
+    // for just those user ids in one flat query and stitches them in memory. A nested
+    // `u.Comments.Select(...)` projection with a joined Attraction.Title generates a slow per-row
+    // correlated subquery and can hang for a large Comments table.
     public async Task<PagedResult<UsersDto>> GetAllUsersAsync(
         bool includeComments,
         int pageNumber,
         int pageSize
     )
     {
-        var query = _dbContext
-            .Users.Include(u => u.Comments)
-                .ThenInclude(c => c.Attraction)
-            .OrderBy(u => u.Name)
-            .Include(u => u.Comments)
-            .AsQueryable();
-
-        // if (includeComments)
-        //     query = query.Include(u => u.Comments);
+        var query = _dbContext.Users.OrderBy(u => u.Name);
 
         var totalCount = await query.CountAsync();
 
-        var items = await query
+        var pagedUsers = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .Select(u => new UsersDto
@@ -39,22 +33,40 @@ public class UserDbRepos
                 UserId = u.UserId,
                 Name = u.Name,
                 Email = u.Email,
-                Comments = u
-                    .Comments.Select(c => new UserCommentDto
+                CommentCount = u.Comments.Count,
+                Comments = null,
+            })
+            .ToListAsync();
+
+        if (includeComments && pagedUsers.Count > 0)
+        {
+            var userIds = pagedUsers.Select(u => u.UserId).ToList();
+
+            var comments = await _dbContext
+                .Comments.Where(c => userIds.Contains(c.UserId))
+                .Select(c => new
+                {
+                    c.UserId,
+                    Comment = new UserCommentDto
                     {
                         CommentId = c.CommentId,
                         Text = c.Text,
                         CreatedAt = c.CreatedAt,
                         AttractionId = c.AttractionId,
                         AttractionTitle = c.Attraction.Title,
-                    })
-                    .ToList(),
-            })
-            .ToListAsync();
+                    },
+                })
+                .ToListAsync();
+
+            var commentsByUser = comments.ToLookup(x => x.UserId, x => x.Comment);
+
+            foreach (var user in pagedUsers)
+                user.Comments = commentsByUser[user.UserId].ToList();
+        }
 
         return new PagedResult<UsersDto>
         {
-            Items = items,
+            Items = pagedUsers,
             PageNumber = pageNumber,
             PageSize = pageSize,
             TotalCount = totalCount,
