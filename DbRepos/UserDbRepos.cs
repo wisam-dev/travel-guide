@@ -15,7 +15,7 @@ public class UserDbRepos
     // for just those user ids in one flat query and stitches them in memory. A nested
     // `u.Comments.Select(...)` projection with a joined Attraction.Title generates a slow per-row
     // correlated subquery and can hang for a large Comments table.
-    public async Task<PagedResult<UsersDto>> GetAllUsersAsync(
+    public async Task<PagedResult<UsersDto>> ReadAllAsync(
         bool includeComments,
         int pageNumber,
         int pageSize

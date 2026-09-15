@@ -4,12 +4,14 @@ public interface ICategory
 {
     public Guid CategoryId { get; set; }
     public string Name { get; set; }
+    public bool Seeded { get; set; }
 }
 
 public class Category : ICategory, IEquatable<Category>
 {
     public virtual Guid CategoryId { get; set; }
     public virtual string Name { get; set; }
+    public virtual bool Seeded { get; set; }
 
     #region constructors
     public Category() { }

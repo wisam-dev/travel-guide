@@ -11,14 +11,14 @@ namespace AppWebApi.Controllers
         readonly ILogger<AttractionsController> _logger;
         readonly IAttractionService _service;
 
-        // GET: api/attractions/filtered?category=&title=&description=&country=&city=&includeComments=false&pageNumber=1&pageSize=20
+        // GET: api/attractions/read?category=&title=&description=&country=&city=&includeComments=false&pageNumber=1&pageSize=20
         // All filter parameters are optional; provided ones are combined with AND (substring match, case-insensitive).
         // includeComments=true also returns each attraction's full comment list, not just the count.
         [HttpGet()]
-        [ActionName("Filtered")]
+        [ActionName("Read")]
         [ProducesResponseType(200, Type = typeof(PagedResult<AttractionListItemDto>))]
         [ProducesResponseType(400, Type = typeof(string))]
-        public async Task<IActionResult> Filtered(
+        public async Task<IActionResult> Read(
             string category = null,
             string title = null,
             string description = null,
@@ -31,8 +31,8 @@ namespace AppWebApi.Controllers
         {
             try
             {
-                _logger.LogInformation($"{nameof(Filtered)}");
-                var result = await _service.GetFilteredAsync(
+                _logger.LogInformation($"{nameof(Read)}");
+                var result = await _service.ReadAllAsync(
                     category,
                     title,
                     description,
@@ -46,30 +46,22 @@ namespace AppWebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{nameof(Filtered)}: {ex.Message}");
+                _logger.LogError($"{nameof(Read)}: {ex.Message}");
                 return BadRequest(ex.Message);
             }
         }
 
-        // GET: api/attractions/withoutcomments?includeComments=false&pageNumber=1&pageSize=20
+        // GET: api/attractions/readwithoutcomments?pageNumber=1&pageSize=20
         [HttpGet()]
-        [ActionName("WithoutComments")]
+        [ActionName("ReadWithoutComments")]
         [ProducesResponseType(200, Type = typeof(PagedResult<AttractionListItemDto>))]
         [ProducesResponseType(400, Type = typeof(string))]
-        public async Task<IActionResult> WithoutComments(
-            bool includeComments = false,
-            int pageNumber = 1,
-            int pageSize = 20
-        )
+        public async Task<IActionResult> WithoutComments(int pageNumber = 1, int pageSize = 20)
         {
             try
             {
                 _logger.LogInformation($"{nameof(WithoutComments)}");
-                var result = await _service.GetWithoutCommentsAsync(
-                    includeComments,
-                    pageNumber,
-                    pageSize
-                );
+                var result = await _service.ReadAllWithoutCommentsAsync(pageNumber, pageSize);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -81,11 +73,11 @@ namespace AppWebApi.Controllers
 
         // GET: api/attractions/detail/{attractionId}?commentsPageNumber=1&commentsPageSize=20
         [HttpGet("{attractionId}")]
-        [ActionName("Detail")]
+        [ActionName("ReadItem")]
         [ProducesResponseType(200, Type = typeof(AttractionDetailDto))]
         [ProducesResponseType(404, Type = typeof(string))]
         [ProducesResponseType(400, Type = typeof(string))]
-        public async Task<IActionResult> Detail(
+        public async Task<IActionResult> ReadItem(
             Guid attractionId,
             int commentsPageNumber = 1,
             int commentsPageSize = 20
@@ -93,8 +85,8 @@ namespace AppWebApi.Controllers
         {
             try
             {
-                _logger.LogInformation($"{nameof(Detail)}: {attractionId}");
-                var result = await _service.GetDetailAsync(
+                _logger.LogInformation($"{nameof(ReadItem)}: {attractionId}");
+                var result = await _service.ReadItemAsync(
                     attractionId,
                     commentsPageNumber,
                     commentsPageSize
@@ -107,7 +99,7 @@ namespace AppWebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{nameof(Detail)}: {ex.Message}");
+                _logger.LogError($"{nameof(ReadItem)}: {ex.Message}");
                 return BadRequest(ex.Message);
             }
         }

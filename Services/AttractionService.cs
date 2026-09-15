@@ -9,7 +9,7 @@ public class AttractionServiceDb : IAttractionService
     private readonly AttractionDbRepos _repo;
     private readonly ILogger<AttractionServiceDb> _logger;
 
-    public Task<PagedResult<AttractionListItemDto>> GetFilteredAsync(
+    public Task<PagedResult<AttractionListItemDto>> ReadAllAsync(
         string category,
         string title,
         string description,
@@ -19,7 +19,7 @@ public class AttractionServiceDb : IAttractionService
         int pageNumber = 1,
         int pageSize = 20
     ) =>
-        _repo.GetFilteredAsync(
+        _repo.ReadAllAsync(
             category,
             title,
             description,
@@ -30,17 +30,16 @@ public class AttractionServiceDb : IAttractionService
             pageSize
         );
 
-    public Task<PagedResult<AttractionListItemDto>> GetWithoutCommentsAsync(
-        bool includeComments = false,
+    public Task<PagedResult<AttractionListItemDto>> ReadAllWithoutCommentsAsync(
         int pageNumber = 1,
         int pageSize = 20
-    ) => _repo.GetWithoutCommentsAsync(includeComments, pageNumber, pageSize);
+    ) => _repo.ReadAllWithoutCommentsAsync(pageNumber, pageSize);
 
-    public Task<AttractionDetailDto> GetDetailAsync(
+    public Task<AttractionDetailDto> ReadItemAsync(
         Guid attractionId,
         int commentsPageNumber = 1,
         int commentsPageSize = 20
-    ) => _repo.GetDetailAsync(attractionId, commentsPageNumber, commentsPageSize);
+    ) => _repo.ReadItemAsync(attractionId, commentsPageNumber, commentsPageSize);
 
     #region constructors
     public AttractionServiceDb(AttractionDbRepos repo)

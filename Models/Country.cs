@@ -4,12 +4,14 @@ public interface ICountry
 {
     public Guid CountryId { get; set; }
     public string Name { get; set; }
+    public bool Seeded { get; set; }
 }
 
 public class Country : ICountry, IEquatable<Country>
 {
     public virtual Guid CountryId { get; set; }
     public virtual string Name { get; set; }
+    public virtual bool Seeded { get; set; }
 
     #region constructors
     public Country() { }

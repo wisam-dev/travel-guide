@@ -7,6 +7,7 @@ public interface IComment
     public Guid CommentId { get; set; }
     public string Text { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool Seeded { get; set; }
     public Guid UserId { get; set; }
     public Guid AttractionId { get; set; }
 }
@@ -16,6 +17,7 @@ public class Comment : IComment, IEquatable<Comment>
     public virtual Guid CommentId { get; set; }
     public virtual string Text { get; set; }
     public virtual DateTime CreatedAt { get; set; }
+    public virtual bool Seeded { get; set; }
     public virtual Guid UserId { get; set; }
     public virtual Guid AttractionId { get; set; }
 

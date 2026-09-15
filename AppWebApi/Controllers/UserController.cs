@@ -25,7 +25,7 @@ namespace AppWebApi.Controllers
             try
             {
                 _logger.LogInformation($"{nameof(GetAll)}");
-                var result = await _service.GetAllUsersAsync(includeComments, pageNumber, pageSize);
+                var result = await _service.ReadAllAsync(includeComments, pageNumber, pageSize);
                 return Ok(result);
             }
             catch (Exception ex)

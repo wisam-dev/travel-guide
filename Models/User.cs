@@ -7,6 +7,7 @@ public interface IUser
     public Guid UserId { get; set; }
     public string Name { get; set; }
     public string Email { get; set; }
+    public bool Seeded { get; set; }
 }
 
 public class User : IUser, IEquatable<User>
@@ -14,6 +15,7 @@ public class User : IUser, IEquatable<User>
     public virtual Guid UserId { get; set; }
     public virtual string Name { get; set; }
     public virtual string Email { get; set; }
+    public virtual bool Seeded { get; set; }
 
     #region constructors
     public User() { }

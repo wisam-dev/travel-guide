@@ -14,7 +14,7 @@ public class AttractionDbRepos
     // Task 6, bullet 1: filter attractions by category, title, description, country and city.
     // All filters are optional - only the ones actually provided (non-empty) are applied, combined with AND.
     // includeComments: when true, each item also carries its full list of comments (with author name).
-    public async Task<PagedResult<AttractionListItemDto>> GetFilteredAsync(
+    public async Task<PagedResult<AttractionListItemDto>> ReadAllAsync(
         string category,
         string title,
         string description,
@@ -51,8 +51,7 @@ public class AttractionDbRepos
     }
 
     // Task 6, bullet 2: attractions that have zero comments.
-    public async Task<PagedResult<AttractionListItemDto>> GetWithoutCommentsAsync(
-        bool includeComments,
+    public async Task<PagedResult<AttractionListItemDto>> ReadAllWithoutCommentsAsync(
         int pageNumber,
         int pageSize
     )
@@ -64,13 +63,13 @@ public class AttractionDbRepos
             .Include(a => a.Comments)
             .Where(a => !a.Comments.Any());
 
-        // note: includeComments is kept here for API symmetry, but since these attractions have
+        // note: includeComments = false
         // zero comments by definition, the resulting Comments list will always be empty.
-        return await ToPagedListItemsAsync(query, includeComments, pageNumber, pageSize);
+        return await ToPagedListItemsAsync(query, false, pageNumber, pageSize);
     }
 
     // Task 6, bullet 3: one attraction's category, title, description, and all its comments (paginated).
-    public async Task<AttractionDetailDto> GetDetailAsync(
+    public async Task<AttractionDetailDto> ReadItemAsync(
         Guid attractionId,
         int commentsPageNumber,
         int commentsPageSize
