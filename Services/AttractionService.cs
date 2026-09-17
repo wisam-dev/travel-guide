@@ -1,5 +1,6 @@
 using DbRepos;
 using Microsoft.Extensions.Logging;
+using Models;
 using Models.Dto;
 
 namespace Services;
@@ -9,37 +10,33 @@ public class AttractionServiceDb : IAttractionService
     private readonly AttractionDbRepos _repo;
     private readonly ILogger<AttractionServiceDb> _logger;
 
-    public Task<PagedResult<AttractionListItemDto>> ReadAllAsync(
+    public Task<ResponseItemDto<IAttraction>> ReadAttractionAsync(Guid id, bool flat) =>
+        _repo.ReadAttractionAsync(id, flat);
+
+    public Task<ResponsePageDto<IAttraction>> ReadAttractionsAsync(
+        bool seeded,
+        bool flat,
         string category,
         string title,
         string description,
         string country,
         string city,
-        bool includeComments = false,
-        int pageNumber = 1,
-        int pageSize = 20
+        bool onlyWithoutComments,
+        int pageNumber,
+        int pageSize
     ) =>
-        _repo.ReadAllAsync(
+        _repo.ReadAttractionsAsync(
+            seeded,
+            flat,
             category,
             title,
             description,
             country,
             city,
-            includeComments,
+            onlyWithoutComments,
             pageNumber,
             pageSize
         );
-
-    public Task<PagedResult<AttractionListItemDto>> ReadAllWithoutCommentsAsync(
-        int pageNumber = 1,
-        int pageSize = 20
-    ) => _repo.ReadAllWithoutCommentsAsync(pageNumber, pageSize);
-
-    public Task<AttractionDetailDto> ReadItemAsync(
-        Guid attractionId,
-        int commentsPageNumber = 1,
-        int commentsPageSize = 20
-    ) => _repo.ReadItemAsync(attractionId, commentsPageNumber, commentsPageSize);
 
     #region constructors
     public AttractionServiceDb(AttractionDbRepos repo)

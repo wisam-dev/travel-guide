@@ -58,6 +58,18 @@ public class AdminDbRepos
         _dbContext.Cities.AddRange(cities);
         await _dbContext.SaveChangesAsync();
 
+        var countryNameById = countries.ToDictionary(c => c.CountryId, c => c.Name);
+        var addresses = new HashSet<AddressDbM>();
+        foreach (var city in cities)
+        {
+            var countryName = countryNameById[city.CountryId];
+            addresses.Add(
+                new AddressDbM(seeder, city.CityId, city.CountryId, countryName) { Seeded = true }
+            );
+        }
+        _dbContext.Addresses.AddRange(addresses);
+        await _dbContext.SaveChangesAsync();
+
         // --- Users: unique by email --------------------------------------
         var users = new List<UserDbM>();
         var seenEmails = new HashSet<string>();
@@ -71,7 +83,6 @@ public class AdminDbRepos
         await _dbContext.SaveChangesAsync();
 
         // --- Attractions: random category + city (and matching country for a believable address) ---
-        var countryNameById = countries.ToDictionary(c => c.CountryId, c => c.Name);
         var attractions = new List<AttractionDbM>();
         for (int i = 0; i < nrAttractions; i++)
         {

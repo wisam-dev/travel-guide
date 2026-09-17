@@ -1,12 +1,15 @@
+using Models;
 using Models.Dto;
 
 namespace Services;
 
 public interface IUserService
 {
-    public Task<PagedResult<UsersDto>> ReadAllAsync(
-        bool includeComments = true,
-        int pageNumber = 1,
-        int pageSize = 20
+    public Task<ResponsePageDto<IUser>> ReadUsersAsync(
+        bool seeded,
+        bool flat,
+        string filter,
+        int pageNumber,
+        int pageSize
     );
 }

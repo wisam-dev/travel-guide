@@ -2,6 +2,7 @@ using DbContext;
 using DbModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Models;
 using Models.Dto;
 
 namespace DbRepos;
@@ -11,162 +12,110 @@ public class AttractionDbRepos
     private readonly ILogger<AttractionDbRepos> _logger;
     private readonly MainDbContext _dbContext;
 
+    // Task 6, bullet 3: one attraction's category, title, description, and all its comments.
+    // flat=false includes Category/City/Country and Comments+their User - everything the task asks for
+    // in one graph. flat=true returns just the attraction's own scalar columns (no joins).
+    public async Task<ResponseItemDto<IAttraction>> ReadAttractionAsync(Guid id, bool flat)
+    {
+        IAttraction item;
+
+        if (!flat)
+        {
+            var query = _dbContext
+                .Attractions.AsNoTracking()
+                .Include(a => a.Category)
+                .Include(a => a.City)
+                    .ThenInclude(c => c.Country)
+                .Include(a => a.Comments)
+                    .ThenInclude(c => c.User)
+                .Where(a => a.AttractionId == id);
+
+            item = await query.FirstOrDefaultAsync<IAttraction>();
+        }
+        else
+        {
+            var query = _dbContext.Attractions.AsNoTracking().Where(a => a.AttractionId == id);
+
+            item = await query.FirstOrDefaultAsync<IAttraction>();
+        }
+
+        if (item == null)
+            throw new ArgumentException($"Attraction {id} does not exist");
+
+        return new ResponseItemDto<IAttraction>()
+        {
+#if DEBUG
+            ConnectionString = _dbContext.dbConnection,
+#endif
+            Item = item,
+        };
+    }
+
     // Task 6, bullet 1: filter attractions by category, title, description, country and city.
-    // All filters are optional - only the ones actually provided (non-empty) are applied, combined with AND.
-    // includeComments: when true, each item also carries its full list of comments (with author name).
-    public async Task<PagedResult<AttractionListItemDto>> ReadAllAsync(
+    // Every filter defaults to "" (matches everything) when not supplied.
+    // Task 6, bullet 2 (attractions without comments) is covered by the separate onlyWithoutComments flag.
+    public async Task<ResponsePageDto<IAttraction>> ReadAttractionsAsync(
+        bool seeded,
+        bool flat,
         string category,
         string title,
         string description,
         string country,
         string city,
-        bool includeComments,
+        bool onlyWithoutComments,
         int pageNumber,
         int pageSize
     )
     {
-        var query = _dbContext
-            .Attractions.Include(a => a.Category)
-            .Include(a => a.City)
-                .ThenInclude(c => c.Country)
-            .Include(a => a.Comments)
-            .AsQueryable();
+        category ??= "";
+        title ??= "";
+        description ??= "";
+        country ??= "";
+        city ??= "";
 
-        if (!string.IsNullOrWhiteSpace(category))
-            query = query.Where(a => a.Category.Name.Contains(category));
-
-        if (!string.IsNullOrWhiteSpace(title))
-            query = query.Where(a => a.Title.Contains(title));
-
-        if (!string.IsNullOrWhiteSpace(description))
-            query = query.Where(a => a.Description.Contains(description));
-
-        if (!string.IsNullOrWhiteSpace(country))
-            query = query.Where(a => a.City.Country.Name.Contains(country));
-
-        if (!string.IsNullOrWhiteSpace(city))
-            query = query.Where(a => a.City.Name.Contains(city));
-
-        return await ToPagedListItemsAsync(query, includeComments, pageNumber, pageSize);
-    }
-
-    // Task 6, bullet 2: attractions that have zero comments.
-    public async Task<PagedResult<AttractionListItemDto>> ReadAllWithoutCommentsAsync(
-        int pageNumber,
-        int pageSize
-    )
-    {
-        var query = _dbContext
-            .Attractions.Include(a => a.Category)
-            .Include(a => a.City)
-                .ThenInclude(c => c.Country)
-            .Include(a => a.Comments)
-            .Where(a => !a.Comments.Any());
-
-        // note: includeComments = false
-        // zero comments by definition, the resulting Comments list will always be empty.
-        return await ToPagedListItemsAsync(query, false, pageNumber, pageSize);
-    }
-
-    // Task 6, bullet 3: one attraction's category, title, description, and all its comments (paginated).
-    public async Task<AttractionDetailDto> ReadItemAsync(
-        Guid attractionId,
-        int commentsPageNumber,
-        int commentsPageSize
-    )
-    {
-        var attraction = await _dbContext
-            .Attractions.Include(a => a.Category)
-            .Include(a => a.City)
-                .ThenInclude(c => c.Country)
-            .FirstOrDefaultAsync(a => a.AttractionId == attractionId);
-
-        if (attraction == null)
-            return null;
-
-        var commentsQuery = _dbContext
-            .Comments.Include(c => c.User)
-            .Where(c => c.AttractionId == attractionId)
-            .OrderByDescending(c => c.CreatedAt);
-
-        var totalComments = await commentsQuery.CountAsync();
-        var pageOfComments = await commentsQuery
-            .Skip((commentsPageNumber - 1) * commentsPageSize)
-            .Take(commentsPageSize)
-            .Select(c => new CommentDto
-            {
-                CommentId = c.CommentId,
-                Text = c.Text,
-                CreatedAt = c.CreatedAt,
-                UserId = c.UserId,
-                UserName = c.User.Name,
-            })
-            .ToListAsync();
-
-        return new AttractionDetailDto
+        IQueryable<AttractionDbM> query;
+        if (flat)
         {
-            AttractionId = attraction.AttractionId,
-            Title = attraction.Title,
-            Description = attraction.Description,
-            Address = attraction.Address,
-            Category = attraction.Category.Name,
-            City = attraction.City.Name,
-            Country = attraction.City.Country.Name,
-            Comments = new PagedResult<CommentDto>
-            {
-                Items = pageOfComments,
-                PageNumber = commentsPageNumber,
-                PageSize = commentsPageSize,
-                TotalCount = totalComments,
-            },
-        };
-    }
-
-    private async Task<PagedResult<AttractionListItemDto>> ToPagedListItemsAsync(
-        IQueryable<AttractionDbM> query,
-        bool includeComments,
-        int pageNumber,
-        int pageSize
-    )
-    {
-        var totalCount = await query.CountAsync();
-
-        var items = await query
-            .OrderBy(a => a.Title)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .Select(a => new AttractionListItemDto
-            {
-                AttractionId = a.AttractionId,
-                Title = a.Title,
-                Description = a.Description,
-                Category = a.Category.Name,
-                City = a.City.Name,
-                Country = a.City.Country.Name,
-                CommentCount = a.Comments.Count,
-                Comments = a
-                    .Comments.Select(c => new CommentDto
-                    {
-                        CommentId = c.CommentId,
-                        Text = c.Text,
-                        CreatedAt = c.CreatedAt,
-                        UserId = c.UserId,
-                        UserName = c.User.Name,
-                    })
-                    .ToList(),
-            })
-            .ToListAsync();
-
-        if (!includeComments)
-            foreach (var item in items)
-                item.Comments = null;
-
-        return new PagedResult<AttractionListItemDto>
+            query = _dbContext.Attractions.AsNoTracking();
+        }
+        else
         {
-            Items = items,
-            PageNumber = pageNumber,
+            query = _dbContext
+                .Attractions.AsNoTracking()
+                .Include(a => a.Category)
+                .Include(a => a.City)
+                    .ThenInclude(c => c.Country)
+                .Include(a => a.Comments)
+                    .ThenInclude(c => c.User);
+        }
+
+        // Filtering is done via navigation properties regardless of flat/Include - Include only controls
+        // what gets materialized in the result, EF Core still translates these into SQL joins for the WHERE.
+        query = query.Where(a =>
+            (a.Seeded == seeded)
+            && a.Category.Name.ToLower().Contains(category.ToLower())
+            && a.Title.ToLower().Contains(title.ToLower())
+            && a.Description.ToLower().Contains(description.ToLower())
+            && a.City.Country.Name.ToLower().Contains(country.ToLower())
+            && a.City.Name.ToLower().Contains(city.ToLower())
+        );
+
+        if (onlyWithoutComments)
+            query = query.Where(a => !a.Comments.Any());
+
+        return new ResponsePageDto<IAttraction>()
+        {
+#if DEBUG
+            ConnectionString = _dbContext.dbConnection,
+#endif
+            DbItemsCount = await query.CountAsync(),
+            PageItems = await query
+                .OrderBy(a => a.Title)
+                .Skip(pageNumber * pageSize)
+                .Take(pageSize)
+                .ToListAsync<IAttraction>(),
+            PageNr = pageNumber,
             PageSize = pageSize,
-            TotalCount = totalCount,
         };
     }
 

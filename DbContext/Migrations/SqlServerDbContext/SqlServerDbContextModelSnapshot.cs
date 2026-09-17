@@ -22,6 +22,40 @@ namespace DbContext.Migrations.SqlServerDbContext
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("DbModels.AddressDbM", b =>
+                {
+                    b.Property<Guid>("AddressId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CountryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Seeded")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Street")
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<int>("ZipCode")
+                        .HasColumnType("int");
+
+                    b.HasKey("AddressId");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("Seeded");
+
+                    b.ToTable("Addresses");
+                });
+
             modelBuilder.Entity("DbModels.AttractionDbM", b =>
                 {
                     b.Property<Guid>("AttractionId")
@@ -39,6 +73,9 @@ namespace DbContext.Migrations.SqlServerDbContext
 
                     b.Property<string>("Description")
                         .HasColumnType("varchar(2000)");
+
+                    b.Property<bool>("Seeded")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Title")
                         .HasColumnType("varchar(300)");
@@ -63,6 +100,9 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.Property<string>("Name")
                         .HasColumnType("varchar(200)");
 
+                    b.Property<bool>("Seeded")
+                        .HasColumnType("bit");
+
                     b.HasKey("CategoryId");
 
                     b.HasIndex("Name")
@@ -84,6 +124,9 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.Property<string>("Name")
                         .HasColumnType("varchar(200)");
 
+                    b.Property<bool>("Seeded")
+                        .HasColumnType("bit");
+
                     b.HasKey("CityId");
 
                     b.HasIndex("CountryId");
@@ -104,6 +147,9 @@ namespace DbContext.Migrations.SqlServerDbContext
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("Seeded")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Text")
                         .HasColumnType("varchar(1000)");
@@ -129,6 +175,9 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.Property<string>("Name")
                         .HasColumnType("varchar(200)");
 
+                    b.Property<bool>("Seeded")
+                        .HasColumnType("bit");
+
                     b.HasKey("CountryId");
 
                     b.HasIndex("Name")
@@ -150,6 +199,9 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.Property<string>("Name")
                         .HasColumnType("varchar(200)");
 
+                    b.Property<bool>("Seeded")
+                        .HasColumnType("bit");
+
                     b.HasKey("UserId");
 
                     b.HasIndex("Email")
@@ -157,6 +209,25 @@ namespace DbContext.Migrations.SqlServerDbContext
                         .HasFilter("[Email] IS NOT NULL");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("DbModels.AddressDbM", b =>
+                {
+                    b.HasOne("DbModels.CityDbM", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DbModels.CountryDbM", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("City");
+
+                    b.Navigation("Country");
                 });
 
             modelBuilder.Entity("DbModels.AttractionDbM", b =>

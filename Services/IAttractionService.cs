@@ -1,28 +1,22 @@
+using Models;
 using Models.Dto;
 
 namespace Services;
 
 public interface IAttractionService
 {
-    public Task<PagedResult<AttractionListItemDto>> ReadAllAsync(
+    public Task<ResponseItemDto<IAttraction>> ReadAttractionAsync(Guid id, bool flat);
+
+    public Task<ResponsePageDto<IAttraction>> ReadAttractionsAsync(
+        bool seeded,
+        bool flat,
         string category,
         string title,
         string description,
         string country,
         string city,
-        bool includeComments = false,
-        int pageNumber = 1,
-        int pageSize = 20
-    );
-
-    public Task<PagedResult<AttractionListItemDto>> ReadAllWithoutCommentsAsync(
-        int pageNumber = 1,
-        int pageSize = 20
-    );
-
-    public Task<AttractionDetailDto> ReadItemAsync(
-        Guid attractionId,
-        int commentsPageNumber = 1,
-        int commentsPageSize = 20
+        bool onlyWithoutComments,
+        int pageNumber,
+        int pageSize
     );
 }

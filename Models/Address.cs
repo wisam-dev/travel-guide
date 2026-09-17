@@ -24,12 +24,15 @@ public class Address : IAddress, IEquatable<Address>
     #region constructors
     public Address() { }
 
-    // cityId and countryId must reference rows already saved in the database
-    public Address(SeedGenerator seeder, Guid cityId, Guid countryId)
+    // cityId/countryId must reference rows already saved in the database.
+    // countryName is required so the seeder picks a street from the RIGHT country's street list -
+    // calling seeder.StreetAddress() with no argument picks a random country's streets instead,
+    // which would mismatch the actual city/country this address belongs to.
+    public Address(SeedGenerator seeder, Guid cityId, Guid countryId, string countryName)
     {
         CityId = cityId;
         CountryId = countryId;
-        Street = seeder.StreetAddress();
+        Street = seeder.StreetAddress(countryName);
         ZipCode = seeder.ZipCode;
     }
     #endregion

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Models;
 using Models.Dto;
 using Services;
 
@@ -11,26 +12,35 @@ namespace AppWebApi.Controllers
         readonly ILogger<UsersController> _logger;
         readonly IUserService _service;
 
-        // GET: api/users/getall?includeComments=true&pageNumber=1&pageSize=20
+        // GET: api/users/read?seeded=true&flat=false&filter=&pageNumber=0&pageSize=20
+        // Task 6, bullet 4: all users and the comments each has posted (flat=false includes them).
         [HttpGet()]
-        [ActionName("")]
-        [ProducesResponseType(200, Type = typeof(PagedResult<UsersDto>))]
+        [ActionName("Read")]
+        [ProducesResponseType(200, Type = typeof(ResponsePageDto<IUser>))]
         [ProducesResponseType(400, Type = typeof(string))]
-        public async Task<IActionResult> GetAll(
-            bool includeComments = true,
-            int pageNumber = 1,
-            int pageSize = 20
+        public async Task<IActionResult> Read(
+            bool seeded = true,
+            bool flat = false,
+            string filter = "",
+            int pageNumber = 0,
+            int pageSize = 5
         )
         {
             try
             {
-                _logger.LogInformation($"{nameof(GetAll)}");
-                var result = await _service.ReadAllAsync(includeComments, pageNumber, pageSize);
+                _logger.LogInformation($"{nameof(Read)}");
+                var result = await _service.ReadUsersAsync(
+                    seeded,
+                    flat,
+                    filter,
+                    pageNumber,
+                    pageSize
+                );
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{nameof(GetAll)}: {ex.Message}");
+                _logger.LogError($"{nameof(Read)}: {ex.Message}");
                 return BadRequest(ex.Message);
             }
         }

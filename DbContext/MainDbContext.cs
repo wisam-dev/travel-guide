@@ -25,6 +25,7 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
     #region C# model of database tables
     public DbSet<CountryDbM> Countries { get; set; }
     public DbSet<CityDbM> Cities { get; set; }
+    public DbSet<AddressDbM> Addresses { get; set; }
     public DbSet<CategoryDbM> Categories { get; set; }
     public DbSet<AttractionDbM> Attractions { get; set; }
     public DbSet<UserDbM> Users { get; set; }
@@ -52,6 +53,20 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
             .WithMany(co => co.Cities)
             .HasForeignKey(c => c.CountryId)
             .OnDelete(DeleteBehavior.Restrict); // don't allow deleting a country that still has cities
+
+        modelBuilder
+            .Entity<AddressDbM>()
+            .HasOne(a => a.City)
+            .WithMany()
+            .HasForeignKey(a => a.CityId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder
+            .Entity<AddressDbM>()
+            .HasOne(a => a.Country)
+            .WithMany()
+            .HasForeignKey(a => a.CountryId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // City 1---* Attraction
         modelBuilder
@@ -101,6 +116,10 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
             .Property(a => a.Description)
             .HasColumnType("varchar(2000)");
         modelBuilder.Entity<CommentDbM>().Property(c => c.Text).HasColumnType("varchar(1000)");
+
+        modelBuilder.Entity<AddressDbM>().Property(a => a.Seeded).HasDefaultValue(false);
+        modelBuilder.Entity<AddressDbM>().HasIndex(a => a.Seeded);
+        modelBuilder.Entity<AddressDbM>().Property(a => a.Street).HasColumnType("varchar(300)");
 
         #endregion
 
