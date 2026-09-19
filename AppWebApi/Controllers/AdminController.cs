@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
+using Models.Dto;
 using Newtonsoft.Json;
 using Services;
 
@@ -89,6 +90,46 @@ namespace AppWebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"{nameof(Seed)}: {ex.Message}");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //GET: api/admin/clearData?onlySeeded=true
+        [HttpGet()]
+        [ActionName("ClearData")]
+        [ProducesResponseType(200, Type = typeof(DataResultInfoDto))]
+        [ProducesResponseType(400, Type = typeof(string))]
+        public async Task<IActionResult> ClearData(bool onlySeeded = true)
+        {
+            try
+            {
+                _logger.LogInformation($"{nameof(ClearData)}: onlySeeded={onlySeeded}");
+                var result = await _service.ClearDataAsync(onlySeeded);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"{nameof(ClearData)}: {ex.Message}");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //GET: api/admin/dbinfo
+        [HttpGet()]
+        [ActionName("DbInfo")]
+        [ProducesResponseType(200, Type = typeof(DbInfoDto))]
+        [ProducesResponseType(400, Type = typeof(string))]
+        public async Task<IActionResult> DbInfo()
+        {
+            try
+            {
+                _logger.LogInformation($"{nameof(DbInfo)}");
+                var result = await _service.GetDbInfoAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"{nameof(DbInfo)}: {ex.Message}");
                 return BadRequest(ex.Message);
             }
         }

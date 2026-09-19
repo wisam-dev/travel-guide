@@ -62,13 +62,13 @@ namespace DbContext.Migrations.SqlServerDbContext
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Address")
-                        .HasColumnType("varchar(200)");
+                    b.Property<Guid>("AddressId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("CityId")
+                    b.Property<Guid?>("CityDbMCityId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
@@ -82,9 +82,11 @@ namespace DbContext.Migrations.SqlServerDbContext
 
                     b.HasKey("AttractionId");
 
+                    b.HasIndex("AddressId");
+
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CityId");
+                    b.HasIndex("CityDbMCityId");
 
                     b.HasIndex("Title");
 
@@ -130,8 +132,6 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.HasKey("CityId");
 
                     b.HasIndex("CountryId");
-
-                    b.HasIndex("Name");
 
                     b.ToTable("Cities");
                 });
@@ -211,6 +211,61 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Models.Dto.DbInfoDto", b =>
+                {
+                    b.Property<int>("NrAddresses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrAttractions")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrAttractionsWithComments")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrCities")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrComments")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrSeededAddresses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrSeededAttractions")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrSeededCities")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrSeededComments")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrSeededUsers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrUnseededAddresses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrUnseededAttractions")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrUnseededCities")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrUnseededComments")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrUnseededUsers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NrUsers")
+                        .HasColumnType("int");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_db_info", (string)null);
+                });
+
             modelBuilder.Entity("DbModels.AddressDbM", b =>
                 {
                     b.HasOne("DbModels.CityDbM", "City")
@@ -232,21 +287,25 @@ namespace DbContext.Migrations.SqlServerDbContext
 
             modelBuilder.Entity("DbModels.AttractionDbM", b =>
                 {
+                    b.HasOne("DbModels.AddressDbM", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("DbModels.CategoryDbM", "Category")
                         .WithMany("Attractions")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("DbModels.CityDbM", "City")
+                    b.HasOne("DbModels.CityDbM", null)
                         .WithMany("Attractions")
-                        .HasForeignKey("CityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("CityDbMCityId");
+
+                    b.Navigation("Address");
 
                     b.Navigation("Category");
-
-                    b.Navigation("City");
                 });
 
             modelBuilder.Entity("DbModels.CityDbM", b =>

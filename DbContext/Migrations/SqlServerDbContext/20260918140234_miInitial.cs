@@ -104,16 +104,22 @@ namespace DbContext.Migrations.SqlServerDbContext
                 columns: table => new
                 {
                     AttractionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CityDbMCityId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Title = table.Column<string>(type: "varchar(300)", nullable: true),
                     Description = table.Column<string>(type: "varchar(2000)", nullable: true),
-                    Address = table.Column<string>(type: "varchar(200)", nullable: true),
-                    Seeded = table.Column<bool>(type: "bit", nullable: false),
                     CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    AddressId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Seeded = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Attractions", x => x.AttractionId);
+                    table.ForeignKey(
+                        name: "FK_Attractions_Addresses_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "AddressId",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Attractions_Categories_CategoryId",
                         column: x => x.CategoryId,
@@ -121,11 +127,10 @@ namespace DbContext.Migrations.SqlServerDbContext
                         principalColumn: "CategoryId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Attractions_Cities_CityId",
-                        column: x => x.CityId,
+                        name: "FK_Attractions_Cities_CityDbMCityId",
+                        column: x => x.CityDbMCityId,
                         principalTable: "Cities",
-                        principalColumn: "CityId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "CityId");
                 });
 
             migrationBuilder.CreateTable(
@@ -172,14 +177,19 @@ namespace DbContext.Migrations.SqlServerDbContext
                 column: "Seeded");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Attractions_AddressId",
+                table: "Attractions",
+                column: "AddressId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Attractions_CategoryId",
                 table: "Attractions",
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Attractions_CityId",
+                name: "IX_Attractions_CityDbMCityId",
                 table: "Attractions",
-                column: "CityId");
+                column: "CityDbMCityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Attractions_Title",
@@ -197,11 +207,6 @@ namespace DbContext.Migrations.SqlServerDbContext
                 name: "IX_Cities_CountryId",
                 table: "Cities",
                 column: "CountryId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Cities_Name",
-                table: "Cities",
-                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_AttractionId",
@@ -232,9 +237,6 @@ namespace DbContext.Migrations.SqlServerDbContext
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Addresses");
-
-            migrationBuilder.DropTable(
                 name: "Comments");
 
             migrationBuilder.DropTable(
@@ -242,6 +244,9 @@ namespace DbContext.Migrations.SqlServerDbContext
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Addresses");
 
             migrationBuilder.DropTable(
                 name: "Categories");

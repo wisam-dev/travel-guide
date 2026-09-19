@@ -12,9 +12,7 @@ public class AttractionDbRepos
     private readonly ILogger<AttractionDbRepos> _logger;
     private readonly MainDbContext _dbContext;
 
-    // Task 6, bullet 3: one attraction's category, title, description, and all its comments.
-    // flat=false includes Category/City/Country and Comments+their User - everything the task asks for
-    // in one graph. flat=true returns just the attraction's own scalar columns (no joins).
+    // Task 6, bullet 3: one attraction's category, title, description, address, and all its comments.
     public async Task<ResponseItemDto<IAttraction>> ReadAttractionAsync(Guid id, bool flat)
     {
         IAttraction item;
@@ -24,8 +22,9 @@ public class AttractionDbRepos
             var query = _dbContext
                 .Attractions.AsNoTracking()
                 .Include(a => a.Category)
-                .Include(a => a.City)
-                    .ThenInclude(c => c.Country)
+                .Include(a => a.Address)
+                    .ThenInclude(addr => addr.City)
+                        .ThenInclude(c => c.Country)
                 .Include(a => a.Comments)
                     .ThenInclude(c => c.User)
                 .Where(a => a.AttractionId == id);
@@ -52,7 +51,7 @@ public class AttractionDbRepos
     }
 
     // Task 6, bullet 1: filter attractions by category, title, description, country and city.
-    // Every filter defaults to "" (matches everything) when not supplied.
+    // country/city now filter through Address.City/Address.City.Country instead of a direct CityId.
     // Task 6, bullet 2 (attractions without comments) is covered by the separate onlyWithoutComments flag.
     public async Task<ResponsePageDto<IAttraction>> ReadAttractionsAsync(
         bool seeded,
@@ -83,8 +82,9 @@ public class AttractionDbRepos
             query = _dbContext
                 .Attractions.AsNoTracking()
                 .Include(a => a.Category)
-                .Include(a => a.City)
-                    .ThenInclude(c => c.Country)
+                .Include(a => a.Address)
+                    .ThenInclude(addr => addr.City)
+                        .ThenInclude(c => c.Country)
                 .Include(a => a.Comments)
                     .ThenInclude(c => c.User);
         }
@@ -96,8 +96,8 @@ public class AttractionDbRepos
             && a.Category.Name.ToLower().Contains(category.ToLower())
             && a.Title.ToLower().Contains(title.ToLower())
             && a.Description.ToLower().Contains(description.ToLower())
-            && a.City.Country.Name.ToLower().Contains(country.ToLower())
-            && a.City.Name.ToLower().Contains(city.ToLower())
+            && a.Address.City.Country.Name.ToLower().Contains(country.ToLower())
+            && a.Address.City.Name.ToLower().Contains(city.ToLower())
         );
 
         if (onlyWithoutComments)

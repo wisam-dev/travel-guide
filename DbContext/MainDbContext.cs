@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting.Internal;
+using Models.Dto;
 
 namespace DbContext;
 
@@ -30,6 +31,7 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<AttractionDbM> Attractions { get; set; }
     public DbSet<UserDbM> Users { get; set; }
     public DbSet<CommentDbM> Comments { get; set; }
+    public DbSet<DbInfoDto> DbInfo { get; set; }
     #endregion
 
     #region constructors
@@ -68,12 +70,12 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
             .HasForeignKey(a => a.CountryId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // City 1---* Attraction
+        // Address 1---* Attraction
         modelBuilder
             .Entity<AttractionDbM>()
-            .HasOne(a => a.City)
-            .WithMany(c => c.Attractions)
-            .HasForeignKey(a => a.CityId)
+            .HasOne(a => a.Address)
+            .WithMany()
+            .HasForeignKey(a => a.AddressId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Category 1---* Attraction
@@ -104,8 +106,6 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
 
         modelBuilder.Entity<AttractionDbM>().HasIndex(a => a.Title);
 
-        modelBuilder.Entity<CityDbM>().HasIndex(c => c.Name);
-
         modelBuilder.Entity<CountryDbM>().HasIndex(c => c.Name).IsUnique();
 
         modelBuilder.Entity<CategoryDbM>().HasIndex(c => c.Name).IsUnique();
@@ -120,6 +120,8 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
         modelBuilder.Entity<AddressDbM>().Property(a => a.Seeded).HasDefaultValue(false);
         modelBuilder.Entity<AddressDbM>().HasIndex(a => a.Seeded);
         modelBuilder.Entity<AddressDbM>().Property(a => a.Street).HasColumnType("varchar(300)");
+
+        modelBuilder.Entity<DbInfoDto>().HasNoKey().ToView("vw_db_info");
 
         #endregion
 

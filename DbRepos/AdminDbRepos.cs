@@ -1,8 +1,12 @@
-﻿using Configuration;
+﻿using System.Data; // CommandType, ConnectionState, ParameterDirection, SqlDbType
+using System.Data.Common; // DbParameter
+using Configuration;
 using DbContext;
 using DbModels;
+using Microsoft.Data.SqlClient; // SqlParameter
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Models.Dto;
 using Seido.Utilities.SeedGenerator;
 
 namespace DbRepos;
@@ -34,16 +38,22 @@ public class AdminDbRepos
         var fn = Path.GetFullPath(_seedSource);
         var seeder = new SeedGenerator(fn);
 
-        _logger.LogInformation($"{nameof(SeedAsync)}: clearing existing data");
-        await ClearAllAsync();
+        _logger.LogInformation($"{nameof(SeedAsync)}: clearing existing seeded data");
+        await ClearDataAsync(true);
 
         // --- Countries -------------------------------------------------
-        var countries = _countryNames.Select(name => new CountryDbM(name)).ToList();
+        var countries = _countryNames
+            .Select(name => new CountryDbM(name) { Seeded = true })
+            .ToList();
         _dbContext.Countries.AddRange(countries);
         await _dbContext.SaveChangesAsync();
 
+        var countryNameById = countries.ToDictionary(c => c.CountryId, c => c.Name);
+
         // --- Categories --------------------------------------------------
-        var categories = _categoryNames.Select(name => new CategoryDbM(name)).ToList();
+        var categories = _categoryNames
+            .Select(name => new CategoryDbM(name) { Seeded = true })
+            .ToList();
         _dbContext.Categories.AddRange(categories);
         await _dbContext.SaveChangesAsync();
 
@@ -53,15 +63,16 @@ public class AdminDbRepos
         {
             var country = countries[i % countries.Count];
             var cityName = seeder.City(country.Name);
-            cities.Add(new CityDbM(cityName, country.CountryId));
+            cities.Add(new CityDbM(cityName, country.CountryId) { Seeded = true });
         }
         _dbContext.Cities.AddRange(cities);
         await _dbContext.SaveChangesAsync();
 
-        var countryNameById = countries.ToDictionary(c => c.CountryId, c => c.Name);
-        var addresses = new HashSet<AddressDbM>();
-        foreach (var city in cities)
+        // --- Addresses: one per attraction, each tied to a random city (and that city's country) ---
+        var addresses = new List<AddressDbM>();
+        for (int i = 0; i < nrAttractions; i++)
         {
+            var city = cities[seeder.Next(0, cities.Count)];
             var countryName = countryNameById[city.CountryId];
             addresses.Add(
                 new AddressDbM(seeder, city.CityId, city.CountryId, countryName) { Seeded = true }
@@ -75,23 +86,23 @@ public class AdminDbRepos
         var seenEmails = new HashSet<string>();
         while (users.Count < nrUsers)
         {
-            var candidate = new UserDbM(seeder);
+            var candidate = new UserDbM(seeder) { Seeded = true };
             if (seenEmails.Add(candidate.Email.Trim().ToLower()))
                 users.Add(candidate);
         }
         _dbContext.Users.AddRange(users);
         await _dbContext.SaveChangesAsync();
 
-        // --- Attractions: random category + city (and matching country for a believable address) ---
+        // --- Attractions: one per address, random category ---------------
         var attractions = new List<AttractionDbM>();
-        for (int i = 0; i < nrAttractions; i++)
+        for (int i = 0; i < addresses.Count; i++)
         {
-            var city = cities[seeder.Next(0, cities.Count)];
             var category = categories[seeder.Next(0, categories.Count)];
-            var countryName = countryNameById[city.CountryId];
-
             attractions.Add(
-                new AttractionDbM(seeder, category.CategoryId, city.CityId, countryName)
+                new AttractionDbM(seeder, category.CategoryId, addresses[i].AddressId)
+                {
+                    Seeded = true,
+                }
             );
         }
         _dbContext.Attractions.AddRange(attractions);
@@ -105,7 +116,9 @@ public class AdminDbRepos
             for (int i = 0; i < nrComments; i++)
             {
                 var user = users[seeder.Next(0, users.Count)];
-                comments.Add(new CommentDbM(seeder, user.UserId, attraction.AttractionId));
+                comments.Add(
+                    new CommentDbM(seeder, user.UserId, attraction.AttractionId) { Seeded = true }
+                );
             }
         }
         _dbContext.Comments.AddRange(comments);
@@ -113,27 +126,83 @@ public class AdminDbRepos
 
         _logger.LogInformation(
             $"{nameof(SeedAsync)}: seeded {countries.Count} countries, {categories.Count} categories, "
-                + $"{cities.Count} cities, {users.Count} users, {attractions.Count} attractions, {comments.Count} comments"
+                + $"{cities.Count} cities, {addresses.Count} addresses, {users.Count} users, {attractions.Count} attractions, {comments.Count} comments"
         );
     }
 
     // Deletes existing rows in FK-safe order (children before parents).
-    public async Task ClearAllAsync()
+    public async Task<DataResultInfoDto> ClearDataAsync(bool onlySeeded = true)
     {
-        _dbContext.Comments.RemoveRange(_dbContext.Comments);
-        await _dbContext.SaveChangesAsync();
+        _logger.LogInformation($"{nameof(ClearDataAsync)}: onlySeeded={onlySeeded}");
 
-        _dbContext.Attractions.RemoveRange(_dbContext.Attractions);
-        await _dbContext.SaveChangesAsync();
+        var connection = _dbContext.Database.GetDbConnection();
+        using var command = connection.CreateCommand();
+        command.CommandType = CommandType.StoredProcedure;
+        command.CommandText = "clear_db_data";
 
-        _dbContext.Cities.RemoveRange(_dbContext.Cities);
-        _dbContext.Categories.RemoveRange(_dbContext.Categories);
-        _dbContext.Users.RemoveRange(_dbContext.Users);
-        await _dbContext.SaveChangesAsync();
+        var onlySeededParam = new SqlParameter("@OnlySeeded", onlySeeded);
+        var nrCommentsParam = new SqlParameter("@NrCommentsAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output,
+        };
+        var nrAttractionsParam = new SqlParameter("@NrAttractionsAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output,
+        };
+        var nrAddressesParam = new SqlParameter("@NrAddressesAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output,
+        };
+        var nrCitiesParam = new SqlParameter("@NrCitiesAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output,
+        };
+        var nrCategoriesParam = new SqlParameter("@NrCategoriesAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output,
+        };
+        var nrUsersParam = new SqlParameter("@NrUsersAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output,
+        };
+        var nrCountriesParam = new SqlParameter("@NrCountriesAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output,
+        };
 
-        _dbContext.Countries.RemoveRange(_dbContext.Countries);
-        await _dbContext.SaveChangesAsync();
+        command.Parameters.AddRange(
+            new DbParameter[]
+            {
+                onlySeededParam,
+                nrCommentsParam,
+                nrAttractionsParam,
+                nrAddressesParam,
+                nrCitiesParam,
+                nrCategoriesParam,
+                nrUsersParam,
+                nrCountriesParam,
+            }
+        );
+
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+
+        await command.ExecuteNonQueryAsync();
+
+        return new DataResultInfoDto
+        {
+            NrCommentsAffected = (int)nrCommentsParam.Value,
+            NrAttractionsAffected = (int)nrAttractionsParam.Value,
+            NrAddressesAffected = (int)nrAddressesParam.Value,
+            NrCitiesAffected = (int)nrCitiesParam.Value,
+            NrCategoriesAffected = (int)nrCategoriesParam.Value,
+            NrUsersAffected = (int)nrUsersParam.Value,
+            NrCountriesAffected = (int)nrCountriesParam.Value,
+        };
     }
+
+    public Task<DbInfoDto> GetDbInfoAsync() =>
+        _dbContext.DbInfo.AsNoTracking().FirstOrDefaultAsync();
 
     public AdminDbRepos(
         ILogger<AdminDbRepos> logger,

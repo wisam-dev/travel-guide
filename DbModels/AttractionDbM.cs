@@ -13,8 +13,8 @@ public sealed class AttractionDbM : Attraction, IEquatable<AttractionDbM>
     [ForeignKey(nameof(CategoryId))]
     public CategoryDbM Category { get; set; }
 
-    [ForeignKey(nameof(CityId))]
-    public CityDbM City { get; set; }
+    [ForeignKey(nameof(AddressId))]
+    public AddressDbM Address { get; set; }
 
     public List<CommentDbM> Comments { get; set; } = new();
 
@@ -22,23 +22,18 @@ public sealed class AttractionDbM : Attraction, IEquatable<AttractionDbM>
     public AttractionDbM()
         : base() { }
 
-    public AttractionDbM(
-        SeedGenerator seeder,
-        Guid categoryId,
-        Guid cityId,
-        string countryForAddress = null
-    )
-        : base(seeder, categoryId, cityId, countryForAddress) { }
+    public AttractionDbM(SeedGenerator seeder, Guid categoryId, Guid addressId)
+        : base(seeder, categoryId, addressId) { }
     #endregion
 
     #region implementing IEquatable
     public bool Equals(AttractionDbM other) =>
         (other != null)
         && (Title?.Trim().ToLower() == other.Title?.Trim().ToLower())
-        && (CityId == other.CityId);
+        && (AddressId == other.AddressId);
 
     public override bool Equals(object obj) => Equals(obj as AttractionDbM);
 
-    public override int GetHashCode() => (Title?.Trim().ToLower(), CityId).GetHashCode();
+    public override int GetHashCode() => (Title?.Trim().ToLower(), AddressId).GetHashCode();
     #endregion
 }

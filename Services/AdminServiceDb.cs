@@ -1,5 +1,6 @@
 ﻿using DbRepos;
 using Microsoft.Extensions.Logging;
+using Models.Dto;
 
 namespace Services;
 
@@ -11,7 +12,10 @@ public class AdminServiceDb : IAdminService
     public Task SeedAsync(int nrUsers = 50, int nrCities = 100, int nrAttractions = 1000) =>
         _repo.SeedAsync(nrUsers, nrCities, nrAttractions);
 
-    public Task ClearAllAsync() => _repo.ClearAllAsync();
+    public Task<DataResultInfoDto> ClearDataAsync(bool onlySeeded = true) =>
+        _repo.ClearDataAsync(onlySeeded);
+
+    public Task<DbInfoDto> GetDbInfoAsync() => _repo.GetDbInfoAsync();
 
     #region constructors
     public AdminServiceDb(AdminDbRepos repo)
