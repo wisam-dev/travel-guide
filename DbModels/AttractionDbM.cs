@@ -26,10 +26,10 @@ public sealed class AttractionDbM : Attraction, IEquatable<AttractionDbM>
     public AttractionDbM(AttractionDbM org)
         : base(org) { }
 
-    public AttractionDbM(AttractionCuDto org, Guid addressId)
+    public AttractionDbM(AttractionCuDto org)
     {
         AttractionId = Guid.NewGuid();
-        AddressId = addressId;
+        AddressId = org.AddressId;
         CategoryId = org.CategoryId;
         Title = org.Title;
         Description = org.Description;
@@ -56,14 +56,13 @@ public sealed class AttractionDbM : Attraction, IEquatable<AttractionDbM>
     #endregion
 
     #region Update from DTO
-    // Only Category/Title/Description live here - City/Country/Street/ZipCode belong to the
-    // linked Address and are updated separately by the repo (see AttractionDbRepos.UpdateAsync).
     public AttractionDbM UpdateFromDTO(AttractionCuDto org)
     {
         if (org == null)
             return null;
 
         CategoryId = org.CategoryId;
+        AddressId = org.AddressId;
         Title = org.Title;
         Description = org.Description;
 

@@ -63,16 +63,15 @@ public class AddressCuDto
 }
 
 // Covers task 10's "add a sight" / "change a sight's category, country, city, title, description".
-// CityId carries both city AND country (a City always belongs to exactly one Country), so setting
-// it changes both at once. Street/ZipCode describe the attraction's own address.
+// AddressId points at an already-existing Address (create one first via AddressesController if
+// needed) - changing a sight's country/city means repointing AddressId at a different address,
+// not editing the address in place.
 public class AttractionCuDto
 {
     public virtual Guid? AttractionId { get; set; }
 
     public virtual Guid CategoryId { get; set; }
-    public virtual Guid CityId { get; set; }
-    public virtual string Street { get; set; }
-    public virtual int ZipCode { get; set; }
+    public virtual Guid AddressId { get; set; }
 
     public virtual string Title { get; set; }
     public virtual string Description { get; set; }
@@ -83,16 +82,10 @@ public class AttractionCuDto
     {
         if (CategoryId == Guid.Empty)
             throw new ArgumentException("CategoryId must be set");
-        if (CityId == Guid.Empty)
-            throw new ArgumentException("CityId must be set");
+        if (AddressId == Guid.Empty)
+            throw new ArgumentException("AddressId must be set");
         if (string.IsNullOrWhiteSpace(Title))
             throw new ArgumentException("Title must be set");
-        if (!string.IsNullOrEmpty(Street) && !Regex.IsMatch(Street, @"^[a-zA-Z0-9\s]*$"))
-            throw new ArgumentException(
-                "Street can only contain letters (a-z), numbers (0-9), and spaces."
-            );
-        if (ZipCode <= 0)
-            throw new ArgumentException("ZipCode has to be larger than zero");
     }
 }
 

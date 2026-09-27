@@ -120,9 +120,11 @@ public class AttractionDbRepos
                 $"{nameof(itemDto.AttractionId)} must be null when creating a new object"
             );
 
-        var city = await _dbContext.Cities.FirstOrDefaultAsync(c => c.CityId == itemDto.CityId);
-        if (city == null)
-            throw new ArgumentException($"City {itemDto.CityId} does not exist");
+        var address = await _dbContext.Addresses.FirstOrDefaultAsync(a =>
+            a.AddressId == itemDto.AddressId
+        );
+        if (address == null)
+            throw new ArgumentException($"Address {itemDto.AddressId} does not exist");
 
         var category = await _dbContext.Categories.FirstOrDefaultAsync(c =>
             c.CategoryId == itemDto.CategoryId
@@ -130,31 +132,27 @@ public class AttractionDbRepos
         if (category == null)
             throw new ArgumentException($"Category {itemDto.CategoryId} does not exist");
 
-        var address = new AddressDbM
-        {
-            AddressId = Guid.NewGuid(),
-            Street = itemDto.Street,
-            ZipCode = itemDto.ZipCode,
-            CityId = city.CityId,
-            CountryId = city.CountryId,
-        };
-        _dbContext.Addresses.Add(address);
-
-        var attraction = new AttractionDbM(itemDto, address.AddressId);
+        var attraction = new AttractionDbM(itemDto);
         _dbContext.Attractions.Add(attraction);
-
         await _dbContext.SaveChangesAsync();
 
         return await ReadAttractionAsync(attraction.AttractionId, false);
     }
 
+    // Country/city changes happen by pointing AddressId at a different (already-existing) address.
     public async Task<ResponseItemDto<IAttraction>> UpdateAttractionAsync(AttractionCuDto itemDto)
     {
-        var attraction = await _dbContext
-            .Attractions.Include(a => a.Address)
-            .FirstOrDefaultAsync(a => a.AttractionId == itemDto.AttractionId);
+        var attraction = await _dbContext.Attractions.FirstOrDefaultAsync(a =>
+            a.AttractionId == itemDto.AttractionId
+        );
         if (attraction == null)
             throw new ArgumentException($"Attraction {itemDto.AttractionId} does not exist");
+
+        var address = await _dbContext.Addresses.FirstOrDefaultAsync(a =>
+            a.AddressId == itemDto.AddressId
+        );
+        if (address == null)
+            throw new ArgumentException($"Address {itemDto.AddressId} does not exist");
 
         var category = await _dbContext.Categories.FirstOrDefaultAsync(c =>
             c.CategoryId == itemDto.CategoryId
@@ -162,17 +160,7 @@ public class AttractionDbRepos
         if (category == null)
             throw new ArgumentException($"Category {itemDto.CategoryId} does not exist");
 
-        var city = await _dbContext.Cities.FirstOrDefaultAsync(c => c.CityId == itemDto.CityId);
-        if (city == null)
-            throw new ArgumentException($"City {itemDto.CityId} does not exist");
-
         attraction.UpdateFromDTO(itemDto);
-
-        attraction.Address.Street = itemDto.Street ?? attraction.Address.Street;
-        attraction.Address.ZipCode =
-            itemDto.ZipCode > 0 ? itemDto.ZipCode : attraction.Address.ZipCode;
-        attraction.Address.CityId = city.CityId;
-        attraction.Address.CountryId = city.CountryId;
 
         _dbContext.Attractions.Update(attraction);
         await _dbContext.SaveChangesAsync();
