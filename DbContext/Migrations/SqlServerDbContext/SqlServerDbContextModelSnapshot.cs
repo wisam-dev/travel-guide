@@ -68,9 +68,6 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CityDbMCityId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Description")
                         .HasColumnType("varchar(2000)");
 
@@ -85,8 +82,6 @@ namespace DbContext.Migrations.SqlServerDbContext
                     b.HasIndex("AddressId");
 
                     b.HasIndex("CategoryId");
-
-                    b.HasIndex("CityDbMCityId");
 
                     b.HasIndex("Title");
 
@@ -299,10 +294,6 @@ namespace DbContext.Migrations.SqlServerDbContext
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("DbModels.CityDbM", null)
-                        .WithMany("Attractions")
-                        .HasForeignKey("CityDbMCityId");
-
                     b.Navigation("Address");
 
                     b.Navigation("Category");
@@ -344,11 +335,6 @@ namespace DbContext.Migrations.SqlServerDbContext
                 });
 
             modelBuilder.Entity("DbModels.CategoryDbM", b =>
-                {
-                    b.Navigation("Attractions");
-                });
-
-            modelBuilder.Entity("DbModels.CityDbM", b =>
                 {
                     b.Navigation("Attractions");
                 });

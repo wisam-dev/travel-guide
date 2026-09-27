@@ -38,6 +38,15 @@ public class AttractionServiceDb : IAttractionService
             pageSize
         );
 
+    public Task<ResponseItemDto<IAttraction>> CreateAttractionAsync(AttractionCuDto itemDto) =>
+        _repo.CreateAttractionAsync(itemDto);
+
+    public Task<ResponseItemDto<IAttraction>> UpdateAttractionAsync(AttractionCuDto itemDto) =>
+        _repo.UpdateAttractionAsync(itemDto);
+
+    public Task<ResponseItemDto<IAttraction>> DeleteAttractionAsync(Guid id) =>
+        _repo.DeleteAttractionAsync(id);
+
     #region constructors
     public AttractionServiceDb(AttractionDbRepos repo)
     {

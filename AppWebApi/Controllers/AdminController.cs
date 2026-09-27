@@ -8,8 +8,6 @@ using Models.Dto;
 using Newtonsoft.Json;
 using Services;
 
-// For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace AppWebApi.Controllers
 {
     [ApiController]
@@ -140,7 +138,6 @@ namespace AppWebApi.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<LogMessage>))]
         public async Task<IActionResult> Log([FromServices] ILoggerProvider _loggerProvider)
         {
-            //Note the way to get the LoggerProvider, not the logger from Services via DI
             if (_loggerProvider is InMemoryLoggerProvider cl)
             {
                 return Ok(await cl.MessagesAsync);

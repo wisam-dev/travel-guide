@@ -33,82 +33,70 @@ public class AdminDbRepos
     private Encryptions _encryptions;
     private readonly MainDbContext _dbContext;
 
-    public async Task SeedAsync(int nrUsers = 50, int nrCities = 100, int nrAttractions = 1000)
+    public async Task SeedAsync(
+        int nrUsers = 50,
+        int nrCities = 100,
+        int nrAttractions = 1000,
+        bool clearOnlySeededData = true
+    )
     {
         var fn = Path.GetFullPath(_seedSource);
         var seeder = new SeedGenerator(fn);
 
         _logger.LogInformation($"{nameof(SeedAsync)}: clearing existing seeded data");
-        await ClearDataAsync(true);
+        await ClearDataAsync(clearOnlySeededData);
 
-        // --- Countries -------------------------------------------------
-        var countries = _countryNames
-            .Select(name => new CountryDbM(name) { Seeded = true })
-            .ToList();
+        // --- Countries: all 4 supported by app-seeds.json, via ISeed<T> + UniqueItemsToList -----
+        var countries = seeder.UniqueItemsToList<CountryDbM>(4);
         _dbContext.Countries.AddRange(countries);
         await _dbContext.SaveChangesAsync();
 
         var countryNameById = countries.ToDictionary(c => c.CountryId, c => c.Name);
 
-        // --- Categories --------------------------------------------------
-        var categories = _categoryNames
-            .Select(name => new CategoryDbM(name) { Seeded = true })
-            .ToList();
+        // --- Categories: all 8 in our fixed pool, via ISeed<T> + UniqueItemsToList --------------
+        var categories = seeder.UniqueItemsToList<CategoryDbM>(8);
         _dbContext.Categories.AddRange(categories);
         await _dbContext.SaveChangesAsync();
 
-        // --- Cities: spread evenly across all 4 countries -----------------
+        // --- Cities: spread evenly across all 4 countries (depends on Country, so procedural) ---
         var cities = new List<CityDbM>();
         for (int i = 0; i < nrCities; i++)
         {
             var country = countries[i % countries.Count];
-            var cityName = seeder.City(country.Name);
-            cities.Add(new CityDbM(cityName, country.CountryId) { Seeded = true });
+            cities.Add(new CityDbM().Seed(seeder, country.CountryId, country.Name));
         }
         _dbContext.Cities.AddRange(cities);
         await _dbContext.SaveChangesAsync();
 
-        // --- Addresses: one per attraction, each tied to a random city (and that city's country) ---
+        // --- Addresses: one per attraction, each tied to a random city (depends on City) --------
         var addresses = new List<AddressDbM>();
         for (int i = 0; i < nrAttractions; i++)
         {
             var city = cities[seeder.Next(0, cities.Count)];
             var countryName = countryNameById[city.CountryId];
-            addresses.Add(
-                new AddressDbM(seeder, city.CityId, city.CountryId, countryName) { Seeded = true }
-            );
+            addresses.Add(new AddressDbM().Seed(seeder, city.CityId, city.CountryId, countryName));
         }
         _dbContext.Addresses.AddRange(addresses);
         await _dbContext.SaveChangesAsync();
 
-        // --- Users: unique by email --------------------------------------
-        var users = new List<UserDbM>();
-        var seenEmails = new HashSet<string>();
-        while (users.Count < nrUsers)
-        {
-            var candidate = new UserDbM(seeder) { Seeded = true };
-            if (seenEmails.Add(candidate.Email.Trim().ToLower()))
-                users.Add(candidate);
-        }
+        // --- Users: unique by email
+        var users = seeder.UniqueItemsToList<UserDbM>(nrUsers);
         _dbContext.Users.AddRange(users);
         await _dbContext.SaveChangesAsync();
 
-        // --- Attractions: one per address, random category ---------------
+        // --- Attractions: one per address, random category (depends on Category+Address) --------
         var attractions = new List<AttractionDbM>();
         for (int i = 0; i < addresses.Count; i++)
         {
             var category = categories[seeder.Next(0, categories.Count)];
             attractions.Add(
-                new AttractionDbM(seeder, category.CategoryId, addresses[i].AddressId)
-                {
-                    Seeded = true,
-                }
+                new AttractionDbM().Seed(seeder, category.CategoryId, addresses[i].AddressId)
             );
         }
         _dbContext.Attractions.AddRange(attractions);
         await _dbContext.SaveChangesAsync();
 
-        // --- Comments: 0-20 random comments per attraction -----------------
+        // --- Comments: 0-20 random comments per attraction (depends on User+Attraction) ---------
         var comments = new List<CommentDbM>();
         foreach (var attraction in attractions)
         {
@@ -116,9 +104,7 @@ public class AdminDbRepos
             for (int i = 0; i < nrComments; i++)
             {
                 var user = users[seeder.Next(0, users.Count)];
-                comments.Add(
-                    new CommentDbM(seeder, user.UserId, attraction.AttractionId) { Seeded = true }
-                );
+                comments.Add(new CommentDbM().Seed(seeder, user.UserId, attraction.AttractionId));
             }
         }
         _dbContext.Comments.AddRange(comments);

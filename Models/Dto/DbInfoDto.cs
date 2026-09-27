@@ -1,7 +1,5 @@
 namespace Models.Dto;
 
-// Maps directly onto the vwInfoDb view (see MainDbContext.OnModelCreating: HasNoKey().ToView(...)).
-// Doubles as the API response shape - no separate mapping needed for a flat read-only summary.
 public class DbInfoDto
 {
     public int NrUsers { get; set; }

@@ -19,4 +19,8 @@ public interface IAttractionService
         int pageNumber,
         int pageSize
     );
+
+    public Task<ResponseItemDto<IAttraction>> CreateAttractionAsync(AttractionCuDto itemDto);
+    public Task<ResponseItemDto<IAttraction>> UpdateAttractionAsync(AttractionCuDto itemDto);
+    public Task<ResponseItemDto<IAttraction>> DeleteAttractionAsync(Guid id);
 }

@@ -19,26 +19,23 @@ public class Address : IAddress, IEquatable<Address>
     public virtual int ZipCode { get; set; }
     public virtual Guid CityId { get; set; }
     public virtual Guid CountryId { get; set; }
-    public virtual bool Seeded { get; set; }
+    public virtual bool Seeded { get; set; } = false;
 
     #region constructors
     public Address() { }
 
-    // cityId/countryId must reference rows already saved in the database.
-    // countryName is required so the seeder picks a street from the RIGHT country's street list -
-    // calling seeder.StreetAddress() with no argument picks a random country's streets instead,
-    // which would mismatch the actual city/country this address belongs to.
-    public Address(SeedGenerator seeder, Guid cityId, Guid countryId, string countryName)
+    public Address(Address org)
     {
-        CityId = cityId;
-        CountryId = countryId;
-        Street = seeder.StreetAddress(countryName);
-        ZipCode = seeder.ZipCode;
+        Seeded = org.Seeded;
+        AddressId = org.AddressId;
+        Street = org.Street;
+        ZipCode = org.ZipCode;
+        CityId = org.CityId;
+        CountryId = org.CountryId;
     }
     #endregion
 
     #region implementing IEquatable
-    // Two rows are only accidental duplicates if same street+zip+city+country
     public bool Equals(Address other) =>
         (other != null)
         && (Street?.Trim().ToLower() == other.Street?.Trim().ToLower())
@@ -50,5 +47,24 @@ public class Address : IAddress, IEquatable<Address>
 
     public override int GetHashCode() =>
         (Street?.Trim().ToLower(), ZipCode, CityId, CountryId).GetHashCode();
+    #endregion
+
+    #region randomly seed this instance
+    // Depends on an already-persisted City/Country - not a literal ISeed<Address>.
+    public virtual Address Seed(
+        SeedGenerator seedGenerator,
+        Guid cityId,
+        Guid countryId,
+        string countryName
+    )
+    {
+        Seeded = true;
+        AddressId = Guid.NewGuid();
+        CityId = cityId;
+        CountryId = countryId;
+        Street = seedGenerator.StreetAddress(countryName);
+        ZipCode = seedGenerator.ZipCode;
+        return this;
+    }
     #endregion
 }

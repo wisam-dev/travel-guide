@@ -163,7 +163,6 @@ public class MainDbContext : Microsoft.EntityFrameworkCore.DbContext
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //Add your own modelling based on done migrations
             base.OnModelCreating(modelBuilder);
         }
     }

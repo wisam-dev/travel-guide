@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models;
+using Models.Dto;
 using Seido.Utilities.SeedGenerator;
 
 namespace DbModels;
@@ -20,8 +21,17 @@ public sealed class CommentDbM : Comment, IEquatable<CommentDbM>
     public CommentDbM()
         : base() { }
 
-    public CommentDbM(SeedGenerator seeder, Guid userId, Guid attractionId)
-        : base(seeder, userId, attractionId) { }
+    public CommentDbM(CommentDbM org)
+        : base(org) { }
+
+    public CommentDbM(CommentCuDto org)
+    {
+        CommentId = Guid.NewGuid();
+        UserId = org.UserId;
+        AttractionId = org.AttractionId;
+        Text = org.Text;
+        CreatedAt = DateTime.UtcNow;
+    }
     #endregion
 
     #region implementing IEquatable
@@ -35,5 +45,13 @@ public sealed class CommentDbM : Comment, IEquatable<CommentDbM>
 
     public override int GetHashCode() =>
         (UserId, AttractionId, Text?.Trim().ToLower()).GetHashCode();
+    #endregion
+
+    #region randomly seed this instance
+    public new CommentDbM Seed(SeedGenerator seedGenerator, Guid userId, Guid attractionId)
+    {
+        base.Seed(seedGenerator, userId, attractionId);
+        return this;
+    }
     #endregion
 }

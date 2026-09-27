@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models;
+using Models.Dto;
 using Seido.Utilities.SeedGenerator;
 
 namespace DbModels;
@@ -22,8 +23,17 @@ public sealed class AttractionDbM : Attraction, IEquatable<AttractionDbM>
     public AttractionDbM()
         : base() { }
 
-    public AttractionDbM(SeedGenerator seeder, Guid categoryId, Guid addressId)
-        : base(seeder, categoryId, addressId) { }
+    public AttractionDbM(AttractionDbM org)
+        : base(org) { }
+
+    public AttractionDbM(AttractionCuDto org, Guid addressId)
+    {
+        AttractionId = Guid.NewGuid();
+        AddressId = addressId;
+        CategoryId = org.CategoryId;
+        Title = org.Title;
+        Description = org.Description;
+    }
     #endregion
 
     #region implementing IEquatable
@@ -35,5 +45,29 @@ public sealed class AttractionDbM : Attraction, IEquatable<AttractionDbM>
     public override bool Equals(object obj) => Equals(obj as AttractionDbM);
 
     public override int GetHashCode() => (Title?.Trim().ToLower(), AddressId).GetHashCode();
+    #endregion
+
+    #region randomly seed this instance
+    public new AttractionDbM Seed(SeedGenerator seedGenerator, Guid categoryId, Guid addressId)
+    {
+        base.Seed(seedGenerator, categoryId, addressId);
+        return this;
+    }
+    #endregion
+
+    #region Update from DTO
+    // Only Category/Title/Description live here - City/Country/Street/ZipCode belong to the
+    // linked Address and are updated separately by the repo (see AttractionDbRepos.UpdateAsync).
+    public AttractionDbM UpdateFromDTO(AttractionCuDto org)
+    {
+        if (org == null)
+            return null;
+
+        CategoryId = org.CategoryId;
+        Title = org.Title;
+        Description = org.Description;
+
+        return this;
+    }
     #endregion
 }

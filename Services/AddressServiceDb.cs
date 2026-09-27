@@ -21,6 +21,15 @@ public class AddressServiceDb : IAddressService
         int pageSize
     ) => _repo.ReadAddressesAsync(seeded, flat, filter, pageNumber, pageSize);
 
+    public Task<ResponseItemDto<IAddress>> CreateAddressAsync(AddressCuDto itemDto) =>
+        _repo.CreateAddressAsync(itemDto);
+
+    public Task<ResponseItemDto<IAddress>> UpdateAddressAsync(AddressCuDto itemDto) =>
+        _repo.UpdateAddressAsync(itemDto);
+
+    public Task<ResponseItemDto<IAddress>> DeleteAddressAsync(Guid id) =>
+        _repo.DeleteAddressAsync(id);
+
     #region constructors
     public AddressServiceDb(AddressDbRepos repo)
     {

@@ -18,6 +18,14 @@ public class UserServiceDb : IUserService
         int pageSize
     ) => _repo.ReadUsersAsync(seeded, flat, filter, pageNumber, pageSize);
 
+    public Task<ResponseItemDto<IUser>> CreateUserAsync(UserCuDto itemDto) =>
+        _repo.CreateUserAsync(itemDto);
+
+    public Task<ResponseItemDto<IUser>> UpdateUserAsync(UserCuDto itemDto) =>
+        _repo.UpdateUserAsync(itemDto);
+
+    public Task<ResponseItemDto<IUser>> DeleteUserAsync(Guid id) => _repo.DeleteUserAsync(id);
+
     #region constructors
     public UserServiceDb(UserDbRepos repo)
     {

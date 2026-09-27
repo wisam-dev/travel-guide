@@ -1,12 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models;
+using Models.Dto;
 using Seido.Utilities.SeedGenerator;
 
 namespace DbModels;
 
-// [Table("Addresses", Schema = "supusr")]
-// [Index(nameof(StreetAddress), nameof(ZipCode), nameof(City), nameof(Country), IsUnique = true)]
 public sealed class AddressDbM : Address, IEquatable<AddressDbM>
 {
     [Key]
@@ -22,8 +21,14 @@ public sealed class AddressDbM : Address, IEquatable<AddressDbM>
     public AddressDbM()
         : base() { }
 
-    public AddressDbM(SeedGenerator seeder, Guid cityId, Guid countryId, string countryName)
-        : base(seeder, cityId, countryId, countryName) { }
+    public AddressDbM(AddressDbM org)
+        : base(org) { }
+
+    public AddressDbM(AddressCuDto org)
+    {
+        AddressId = Guid.NewGuid();
+        UpdateFromDTO(org);
+    }
     #endregion
 
     #region implementing IEquatable
@@ -38,16 +43,32 @@ public sealed class AddressDbM : Address, IEquatable<AddressDbM>
 
     public override int GetHashCode() =>
         (Street?.Trim().ToLower(), ZipCode, CityId, CountryId).GetHashCode();
+    #endregion
 
-    // public AddressDbM Seed(SeedGenerator seedGenerator)
-    // {
-    //     throw new NotImplementedException();
-    // }
+    #region randomly seed this instance
+    public new AddressDbM Seed(
+        SeedGenerator seedGenerator,
+        Guid cityId,
+        Guid countryId,
+        string countryName
+    )
+    {
+        base.Seed(seedGenerator, cityId, countryId, countryName);
+        return this;
+    }
+    #endregion
 
-    // public override AddressDbM Seed(SeedGenerator seedGenerator)
-    // {
-    //     base.Seed(seedGenerator);
-    //     return this;
-    // }
+    #region Update from DTO
+    public AddressDbM UpdateFromDTO(AddressCuDto org)
+    {
+        if (org == null)
+            return null;
+
+        Street = org.Street;
+        ZipCode = org.ZipCode;
+        CityId = org.CityId;
+
+        return this;
+    }
     #endregion
 }

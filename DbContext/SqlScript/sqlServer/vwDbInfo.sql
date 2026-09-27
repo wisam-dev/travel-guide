@@ -1,14 +1,6 @@
 use TravelGuide;
 go
 
---create a schemas
-if not exists (select * from sys.schemas where name = 'gstusr')
-    exec('create schema gstusr');
-go
-if not exists (select * from sys.schemas where name = 'usr')
-    exec('create schema usr');
-go
-
 create or alter view vw_db_info as
 select
     (select count(*) from Users)                as NrUsers,

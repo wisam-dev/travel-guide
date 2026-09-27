@@ -13,4 +13,7 @@ public interface IAddressService
         int pageNumber,
         int pageSize
     );
+    public Task<ResponseItemDto<IAddress>> CreateAddressAsync(AddressCuDto itemDto);
+    public Task<ResponseItemDto<IAddress>> UpdateAddressAsync(AddressCuDto itemDto);
+    public Task<ResponseItemDto<IAddress>> DeleteAddressAsync(Guid id);
 }
